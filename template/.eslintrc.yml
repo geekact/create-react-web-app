@@ -1,0 +1,11 @@
+parser: '@typescript-eslint/parser'
+plugins:
+  - '@typescript-eslint'
+{#check_file_parser#}
+root: true
+parserOptions:
+  project: true
+rules:
+{#eslint_ts_rules#}
+
+{#check_file_rules#}

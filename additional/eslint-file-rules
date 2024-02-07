@@ -1,0 +1,2 @@
+'check-file/filename-naming-convention': ['error', { '**/*': '[a-z0-9-.]+' }]
+'check-file/folder-naming-convention': ['error', { '**/': '[a-z0-9-]+' }]

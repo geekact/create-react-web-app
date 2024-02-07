@@ -1,0 +1,12 @@
+{
+  "name": "{#project_name#}",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "preview": "vite preview --mode production",
+    "build": "vite build --mode production",
+    "preinstall": "npx only-allow {#package_manager_name#}"
+  }
+  {#commitlint_config#}
+}
