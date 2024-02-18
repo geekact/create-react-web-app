@@ -178,7 +178,8 @@ await runCommand('生成模板', async () => {
   const additionalDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'additional');
   const patterns = additionFiles
     .map((file) => path.join(additionalDir, file))
-    .concat(path.join(templateDir, '**', '*'));
+    .concat(path.join(templateDir, '**', '*'))
+    .map((file) => file.replaceAll('\\', '/'));
   const files = await glob(patterns, { dot: true, nodir: true });
 
   await Promise.all(
