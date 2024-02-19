@@ -1,6 +1,6 @@
 {
   "name": "@tik/react-web",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "repository": "git@github.com:tik-cli/react-web.git",
   "license": "MIT",
   "type": "module",
