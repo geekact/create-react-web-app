@@ -6,13 +6,14 @@ import chalk from 'chalk';
 const execPromisify = promisify(exec);
 
 export const runShell = async (command: string) => {
-  await execPromisify(command, {
+  const result = await execPromisify(command, {
     cwd: process.cwd(),
     env: process.env,
   });
+  return result;
 };
 
-const ora = Ora();
+export const ora = Ora();
 
 export const runCommand = async (message: string, fn: () => Promise<any>) => {
   ora.start(message);

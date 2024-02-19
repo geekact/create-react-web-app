@@ -2,7 +2,7 @@
 
 import inquirer from 'inquirer';
 import { placeholder } from './placeholder';
-import { runCommand, runShell } from './run';
+import { ora, runCommand, runShell } from './run';
 import path from 'path';
 import { appendFile, mkdir, readFile, writeFile, cp } from 'fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -32,7 +32,7 @@ const { project } = await inquirer.prompt<{ project: string }>({
 });
 appendVariables(placeholder.project(path.basename(project)));
 
-const { packageManager } = await inquirer.prompt<{ packageManager: string }>({
+const { packageManager } = await inquirer.prompt<{ packageManager: 'pnpm' | 'yarn' | 'npm' }>({
   name: 'packageManager',
   message: '选择包管理工具',
   type: 'list',
@@ -166,6 +166,10 @@ if (ui === 'antd') {
   appendVariables(placeholder.normalizeCss);
 }
 
+console.log();
+ora.info('开始生成定制模板');
+console.log();
+
 const rootDir = path.resolve(project);
 
 await runCommand('创建目录', async () => {
@@ -205,9 +209,20 @@ await runCommand('生成模板', async () => {
   );
 });
 
-await runCommand('git初始化', async () => {
-  await runShell('git init');
-});
+if ((await runShell('git -v')).stdout.includes('version')) {
+  await runCommand('git初始化', async () => {
+    await runShell('git init');
+  });
+}
+
+if ((await runShell('volta -v')).stdout.match(/\d\.\d/)) {
+  await runCommand('在package.json中配置volta', async () => {
+    await runShell('volta pin node');
+    if (packageManager !== 'npm') {
+      await runShell(`volta pin ${packageManager}`);
+    }
+  });
+}
 
 await runCommand('安装通用npm包', async () => {
   await runShell(`${packageManager} add react react-dom react-router-dom`);
@@ -284,7 +299,7 @@ if (ui === 'antd') {
   });
 }
 
-await runCommand('使用prettier格式化', async () => {
+await runCommand('使用prettier格式化模板', async () => {
   await runShell('npx prettier --write .');
 });
 
