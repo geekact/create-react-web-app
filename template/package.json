@@ -6,7 +6,7 @@
     "start": "vite",
     "preview": "vite preview --mode production",
     "build": "vite build --mode production",
-    "preinstall": "npx only-allow {#package_manager_name#}"
+    "preinstall": "npx only-allow {#package_manager_name#}",
+    "prepare": "husky"
   }
-  {#commitlint_config#}
 }

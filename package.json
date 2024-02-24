@@ -1,6 +1,6 @@
 {
   "name": "@tik/react-web",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "repository": "git@github.com:tik-cli/react-web.git",
   "license": "MIT",
   "type": "module",
@@ -50,6 +50,7 @@
     "prettier": "^3.2.5",
     "react-router-dom": "^6.22.0",
     "redux-logger": "^3.0.6",
+    "stylelint": "^16.2.1",
     "ts-node": "^10.9.2",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3",

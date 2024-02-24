@@ -1,0 +1,3 @@
+npx --no-install prettier --cache --check .
+{#eslint_husky#}
+{#stylelint_husky#}

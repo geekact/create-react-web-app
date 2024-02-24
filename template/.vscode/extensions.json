@@ -3,5 +3,6 @@
     "esbenp.prettier-vscode",
     "streetsidesoftware.code-spell-checker",
     {#css_modules_extension#}
+    {#stylelint_extension#}
   ]
 }

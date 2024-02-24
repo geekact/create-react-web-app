@@ -4,7 +4,7 @@ import inquirer from 'inquirer';
 import { placeholder } from './placeholder';
 import { ora, runCommand, runShell } from './run';
 import path from 'path';
-import { appendFile, mkdir, readFile, writeFile, cp } from 'fs/promises';
+import { mkdir, readFile, writeFile, cp } from 'fs/promises';
 import { fileURLToPath } from 'node:url';
 import { glob } from 'glob';
 import chalk from 'chalk';
@@ -48,7 +48,7 @@ const { stateManager } = await inquirer.prompt<{ stateManager: 'foca' | '' }>({
 });
 if (stateManager === 'foca') {
   appendVariables(placeholder.foca);
-  additionFiles.push(path.join('src', 'models', '**/*'));
+  additionFiles.push(path.join('src', 'models', '**', '*'));
 }
 
 const { request } = await inquirer.prompt<{ request: 'axios' | 'foca-axios' }>({
@@ -70,77 +70,57 @@ if (request) {
   additionFiles.push(path.join('src', 'services', 'http-client.ts'));
 }
 
-const { commitlint } = await inquirer.prompt<{ commitlint: boolean }>({
-  name: 'commitlint',
-  message: 'commit提交检测',
-  type: 'list',
-  choices: [
-    { name: '要的', value: true },
-    { name: '不要', value: false },
-  ],
-});
-commitlint && appendVariables(placeholder.commit);
-
-const { cssMode } = await inquirer.prompt<{ cssMode: 'css-modules' | '' }>({
+const { cssMode } = await inquirer.prompt<{ cssMode: ('css-modules' | 'stylex' | 'px2rem')[] }>({
   name: 'cssMode',
   message: 'CSS方案',
-  type: 'list',
+  type: 'checkbox',
   choices: [
-    { name: 'Css Modules', value: 'css-modules' },
-    { name: '无', value: '' },
-  ],
-});
-switch (cssMode) {
-  case 'css-modules':
-    appendVariables(placeholder.css_modules);
-    break;
-}
-
-const { pxTransformer } = await inquirer.prompt<{
-  pxTransformer: 'px2rem' | '';
-}>({
-  name: 'pxTransformer',
-  message: '像素转换方式',
-  type: 'list',
-  choices: [
+    { name: 'Css Modules', value: 'css-modules', checked: true },
+    { name: 'Style X', value: 'stylex' },
     { name: 'px -> rem （适合PC + h5）', short: 'px -> rem', value: 'px2rem' },
-    { name: '无', value: '' },
   ],
 });
-
-if (pxTransformer) {
-  const { fontSize } = await inquirer.prompt<{ fontSize: number }>({
-    name: 'fontSize',
-    message: '默认字体大小(px)',
-    type: 'number',
-    default: 16,
-  });
-  appendVariables(placeholder.pxTransformer(pxTransformer, fontSize));
+if (cssMode.includes('css-modules')) {
+  appendVariables(placeholder.css_modules);
+}
+if (cssMode.includes('px2rem')) {
+  appendVariables(placeholder.px2rem);
 }
 
-let eslintParsers: ('strict-ts' | 'check-file')[] = [];
-const { installEslint } = await inquirer.prompt<{ installEslint: boolean }>({
-  name: 'installEslint',
-  message: '安装Eslint相关插件',
-  type: 'list',
+const { lint } = await inquirer.prompt<{ lint: ('commitlint' | 'eslint' | 'stylelint')[] }>({
+  name: 'lint',
+  message: '质量检测',
+  type: 'checkbox',
   choices: [
-    { name: '要的', value: true },
-    { name: '不要', value: false },
+    {
+      name: 'commit提交检测',
+      value: 'commitlint',
+      checked: true,
+    },
+    {
+      name: 'JS质量检测',
+      value: 'eslint',
+      checked: true,
+    },
+    {
+      name: 'CSS质量检测',
+      value: 'stylelint',
+      checked: false,
+    },
   ],
 });
-if (installEslint) {
-  eslintParsers = (
-    await inquirer.prompt({
-      name: 'eslintParsers',
-      message: '建议的eslint规则',
-      type: 'checkbox',
-      choices: [
-        { name: 'TS严格类型', value: 'strict-ts', checked: true },
-        { name: '规范文件名', value: 'check-file', checked: true },
-      ],
-    })
-  )['eslintParsers'];
-  appendVariables(placeholder.eslint(eslintParsers));
+
+if (lint.includes('commitlint')) {
+  appendVariables(placeholder.commitlint);
+  additionFiles.push(path.join('.husky', 'commit-msg'), path.join('.commitlintrc.yml'));
+}
+if (lint.includes('eslint')) {
+  appendVariables(placeholder.eslint);
+  additionFiles.push(path.join('.eslintrc.yml'));
+}
+if (lint.includes('stylelint')) {
+  appendVariables(placeholder.stylelint);
+  additionFiles.push(path.join('.stylelintrc.yml'));
 }
 
 const { ui } = await inquirer.prompt<{ ui: 'antd' | 'normalize.css' | '' }>({
@@ -227,50 +207,44 @@ if ((await runShell('volta -v')).stdout.match(/\d\.\d/)) {
 await runCommand('安装通用npm包', async () => {
   await runShell(`${packageManager} add react react-dom react-router-dom`);
   await runShell(
-    `${packageManager} add @types/node typescript prettier @types/react @types/react-dom -D`,
+    `${packageManager} add husky @types/node typescript prettier @types/react @types/react-dom -D`,
   );
 });
 
-if (commitlint) {
+if (lint.includes('commitlint')) {
   await runCommand('安装commit相关插件', async () => {
-    await runShell(
-      `${packageManager} add husky @commitlint/cli @commitlint/config-conventional -D`,
-    );
-    await runShell(`npx husky init`);
-    await writeFile(
-      path.resolve('.husky/pre-commit'),
-      `npx --no-install prettier --cache --check .`,
-    );
-    await writeFile(path.resolve('.husky', 'commit-msg'), 'npx --no-install commitlint --edit $1');
+    await runShell(`${packageManager} add @commitlint/cli @commitlint/config-conventional -D`);
   });
 }
 
-await runCommand('安装vite相关插件', async () => {
+if (lint.includes('eslint')) {
+  await runCommand('安装eslint相关插件', async () => {
+    const pkgs = [
+      'eslint',
+      '@typescript-eslint/eslint-plugin',
+      '@typescript-eslint/parser',
+      'eslint-plugin-check-file',
+    ];
+
+    await runShell(`${packageManager} add eslint ${pkgs.join(' ')} -D`);
+  });
+}
+
+if (lint.includes('stylelint')) {
+  await runCommand('安装stylelint相关插件', async () => {
+    await runShell(
+      `${packageManager} add stylelint stylelint-config-standard-scss stylelint-config-prettier-scss -D`,
+    );
+  });
+}
+
+await runCommand('安装vite打包插件', async () => {
   await runShell(`${packageManager} add vite vite-react autoprefixer -D`);
 });
 
-if (pxTransformer) {
-  await runCommand('安装CSS像素转换插件', async () => {
-    if (pxTransformer === 'px2rem') {
-      await runShell(`${packageManager} add postcss-pxtorem @types/postcss-pxtorem -D`);
-    }
-  });
-}
-
-if (installEslint) {
-  await runCommand('安装eslint相关插件', async () => {
-    const pkgs = ['eslint', '@typescript-eslint/eslint-plugin', '@typescript-eslint/parser'];
-    if (eslintParsers.includes('check-file')) {
-      pkgs.push('eslint-plugin-check-file');
-    }
-    await runShell(`${packageManager} add eslint ${pkgs.join(' ')} -D`);
-
-    if (commitlint) {
-      await appendFile(
-        path.resolve('.husky', 'pre-commit'),
-        '\nnpx --no-install eslint --cache --ext .ts,.tsx src',
-      );
-    }
+if (cssMode.includes('px2rem')) {
+  await runCommand('安装px转rem插件', async () => {
+    await runShell(`${packageManager} add postcss-pxtorem @types/postcss-pxtorem -D`);
   });
 }
 
