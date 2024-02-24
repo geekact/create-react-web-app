@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "test": "ts-node src/index.ts",
+    "test": "tsx src/index.ts",
     "preinstall": "npx only-allow pnpm",
     "prepublishOnly": "tsup"
   },
@@ -51,8 +51,8 @@
     "react-router-dom": "^6.22.0",
     "redux-logger": "^3.0.6",
     "stylelint": "^16.2.1",
-    "ts-node": "^10.9.2",
     "tsup": "^8.0.1",
+    "tsx": "^4.7.1",
     "typescript": "^5.3.3",
     "vite": "^5.0.12",
     "vite-react": "^3.0.0"
